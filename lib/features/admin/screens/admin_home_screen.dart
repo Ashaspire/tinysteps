@@ -31,7 +31,26 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   ];
 
   Future<void> _signOut(BuildContext context) async {
-    await Supabase.instance.client.auth.signOut();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Sign out?'),
+        content: const Text('You will be returned to the login screen.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sign out'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await Supabase.instance.client.auth.signOut();
+      // GoRouter _SupabaseAuthNotifier will handle redirect to /login
+    }
   }
 
   @override
@@ -65,9 +84,14 @@ class _AdminDashboardContent extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
+<<<<<<< HEAD
             onPressed: () async {
               await Supabase.instance.client.auth.signOut();
             },
+=======
+            tooltip: 'Sign Out',
+            onPressed: () => _signOut(context),
+>>>>>>> c1c4a40fd8042d3a6fc2d3d513a1734b2962c04f
           ),
         ],
       ),
