@@ -4,8 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_theme.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../widgets/child_avatar.dart';
-import '../widgets/status_chip.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/qr_display_sheet.dart';
 
 /// Parent Home Screen — with bottom navigation
 class ParentHomeScreen extends StatefulWidget {
@@ -106,14 +106,11 @@ class _ParentDashboard extends StatelessWidget {
               icon: Icons.qr_code,
               label: 'Show My QR Code',
               color: AppColors.secondary,
-              onTap: () {/* TODO: navigate to QR screen */},
-            ),
-            const SizedBox(height: AppSpacing.md),
-            _QuickActionCard(
-              icon: Icons.calendar_today,
-              label: 'Attendance History',
-              color: AppColors.success,
-              onTap: () {/* TODO: navigate to attendance screen */},
+              onTap: () => showQRDisplaySheet(
+                context,
+                childId: 'dummy-child-001',
+                childName: 'Leo Smith',
+              ),
             ),
 
             const SizedBox(height: AppSpacing.xl),
@@ -167,6 +164,8 @@ class _ParentDashboard extends StatelessWidget {
                 icon: Icons.event_busy_outlined,
               ),
             ),
+
+            const SizedBox(height: AppSpacing.xl),
           ],
         ),
       ),

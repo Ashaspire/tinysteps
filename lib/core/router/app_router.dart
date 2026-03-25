@@ -62,7 +62,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/login',   builder: (c, s) => const LoginScreen()),
       GoRoute(path: '/register', builder: (c, s) => const RegisterScreen()),
-      GoRoute(path: '/parent',  builder: (c, s) => const ParentHomeScreen()),
+      GoRoute(path: '/parent',  builder: (c, s) => const ParentShell()),
       GoRoute(path: '/teacher', builder: (c, s) => const TeacherHomeScreen()),
       GoRoute(path: '/admin',   builder: (c, s) => const AdminHomeScreen()),
     ],
