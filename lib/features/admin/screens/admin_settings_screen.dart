@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tinysteps/core/constants/app_theme.dart';
 import 'package:tinysteps/core/widgets/logout_dialog.dart';
-
+import 'package:tinysteps/features/admin/screens/users_screen.dart';
 class AdminSettingsScreen extends StatefulWidget {
   const AdminSettingsScreen({super.key});
 
@@ -325,8 +325,15 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                         iconColor: AppColors.info,
                         title: 'Roles & Permissions',
                         subtitle: 'Control staff access',
-                        onTap: () {},
-                      ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const UsersScreen(),
+               ),
+             );
+     },
+        ),
                       _settingsTile(
                         icon: Icons.card_membership_rounded,
                         iconColor: AppColors.success,
