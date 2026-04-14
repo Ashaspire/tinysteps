@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -19,12 +20,12 @@ class AdminHomeScreen extends StatefulWidget {
 class _AdminHomeScreenState extends State<AdminHomeScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _tabs = const [
-    _AdminDashboardContent(),
-    UsersScreen(),
-    ClassroomsScreen(),
-    ChildrenOverviewScreen(),
-    AdminSettingsScreen(),
+  late final List<Widget> _tabs = [
+    const _AdminDashboardContent(),
+    const UsersScreen(),
+    const ClassroomsScreen(),
+    const ChildrenOverviewScreen(),
+    const AdminSettingsScreen(),
   ];
 
   @override
@@ -33,7 +34,9 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
-        if (_currentIndex != 0) setState(() => _currentIndex = 0);
+        if (_currentIndex != 0) {
+          setState(() => _currentIndex = 0);
+        }
       },
       child: Scaffold(
         body: IndexedStack(index: _currentIndex, children: _tabs),
@@ -54,7 +57,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Dashboard tab — live stats from DB
+// Dashboard tab with Greeting Card + Live Stats
 // ─────────────────────────────────────────────────────────────────────────────
 class _AdminDashboardContent extends StatefulWidget {
   const _AdminDashboardContent();
@@ -67,14 +70,24 @@ class _AdminDashboardContentState extends State<_AdminDashboardContent> {
   final _supabase = Supabase.instance.client;
   late Future<Map<String, int>> _statsFuture;
 
+  late Timer _timer;
+  late DateTime _now;
+
   @override
   void initState() {
     super.initState();
+    _now = DateTime.now();
     _loadStats();
+
+    // Update greeting every minute
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (mounted) {
+        setState(() => _now = DateTime.now());
+      }
+    });
   }
 
   void _loadStats() {
-    // Single RPC call replaces 6 round-trips → ~300ms vs ~3s
     _statsFuture = _supabase.rpc('admin_dashboard_stats').then((result) {
       final data = result as Map<String, dynamic>;
       return {
@@ -88,6 +101,14 @@ class _AdminDashboardContentState extends State<_AdminDashboardContent> {
     });
   }
 
+  String _getGreeting() {
+    final hour = _now.hour;
+    if (hour >= 5 && hour < 12) return 'Good morning 🌅';
+    if (hour >= 12 && hour < 15) return 'Good afternoon ☀️';
+    if (hour >= 15 && hour < 18) return 'Good evening 🌇';
+    return 'Good night 🌙';
+  }
+
   Future<void> _signOut() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -95,11 +116,15 @@ class _AdminDashboardContentState extends State<_AdminDashboardContent> {
         backgroundColor: AppColors.bgLight,
         surfaceTintColor: Colors.transparent,
         title: Text('Sign out?', style: AppTextStyles.heading3),
-        content: Text('You will be returned to the login screen.', style: AppTextStyles.bodyMedium),
+        content: Text('You will be returned to the login screen.',
+            style: AppTextStyles.bodyMedium),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: AppTextStyles.labelBold.copyWith(color: AppColors.textMuted))),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel',
+                style: AppTextStyles.labelBold
+                    .copyWith(color: AppColors.textMuted)),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () => Navigator.pop(ctx, true),
@@ -111,6 +136,12 @@ class _AdminDashboardContentState extends State<_AdminDashboardContent> {
     if (confirmed == true) {
       await _supabase.auth.signOut();
     }
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
   }
 
   @override
@@ -146,9 +177,41 @@ class _AdminDashboardContentState extends State<_AdminDashboardContent> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Hello, $name 👋', style: AppTextStyles.heading1),
+              // ================= GREETING CARD =================
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                decoration: BoxDecoration(
+                  gradient: AppGradients.sunrise, // Make sure this exists in app_theme.dart
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  boxShadow: AppShadows.card, // Make sure this exists
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      _getGreeting(),
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        color: AppColors.white,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      name,
+                      style: AppTextStyles.heading1.copyWith(
+                        color: AppColors.white,
+                        fontSize: 32,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.xl),
+
               Text('Here\'s your daycare at a glance',
                   style: AppTextStyles.bodyMuted),
+
               const SizedBox(height: AppSpacing.xl),
 
               // ── Stats Grid ──────────────────────────────────────────
@@ -164,6 +227,7 @@ class _AdminDashboardContentState extends State<_AdminDashboardContent> {
                       ),
                     );
                   }
+
                   final stats = snapshot.data ??
                       {
                         'teachers': 0,
@@ -183,6 +247,8 @@ class _AdminDashboardContentState extends State<_AdminDashboardContent> {
                             value: '${stats['teachers']}',
                             icon: Icons.school,
                             color: AppColors.primary,
+                            onTap: () => Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(builder: (_) => const UsersScreen())),
                           ),
                           const SizedBox(width: AppSpacing.md),
                           _StatCard(
@@ -190,6 +256,8 @@ class _AdminDashboardContentState extends State<_AdminDashboardContent> {
                             value: '${stats['pendingTeachers']}',
                             icon: Icons.pending_actions,
                             color: AppColors.warning,
+                            onTap: () => Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(builder: (_) => const UsersScreen())),
                           ),
                         ],
                       ),
@@ -201,6 +269,8 @@ class _AdminDashboardContentState extends State<_AdminDashboardContent> {
                             value: '${stats['parents']}',
                             icon: Icons.family_restroom,
                             color: AppColors.secondary,
+                            onTap: () => Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(builder: (_) => const UsersScreen())),
                           ),
                           const SizedBox(width: AppSpacing.md),
                           _StatCard(
@@ -208,6 +278,8 @@ class _AdminDashboardContentState extends State<_AdminDashboardContent> {
                             value: '${stats['children']}',
                             icon: Icons.child_care,
                             color: AppColors.accent,
+                            onTap: () => Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(builder: (_) => const ChildrenOverviewScreen())),
                           ),
                         ],
                       ),
@@ -219,6 +291,8 @@ class _AdminDashboardContentState extends State<_AdminDashboardContent> {
                             value: '${stats['classrooms']}',
                             icon: Icons.class_,
                             color: AppColors.success,
+                            onTap: () => Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(builder: (_) => const ClassroomsScreen())),
                           ),
                           const SizedBox(width: AppSpacing.md),
                           _StatCard(
@@ -226,6 +300,8 @@ class _AdminDashboardContentState extends State<_AdminDashboardContent> {
                             value: '${stats['unassigned']}',
                             icon: Icons.warning_amber,
                             color: AppColors.danger,
+                            onTap: () => Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(builder: (_) => const UsersScreen())),
                           ),
                         ],
                       ),
@@ -247,8 +323,10 @@ class _StatCard extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.color,
+    this.onTap,
   });
 
+  final VoidCallback? onTap;
   final String label;
   final String value;
   final IconData icon;
@@ -257,27 +335,32 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: [
-            BoxShadow(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            boxShadow: [
+              BoxShadow(
                 color: color.withValues(alpha: 0.1),
                 blurRadius: 10,
-                offset: const Offset(0, 3)),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: color),
-            const SizedBox(height: AppSpacing.sm),
-            Text(value,
-                style: AppTextStyles.heading1.copyWith(color: color)),
-            Text(label, style: AppTextStyles.bodyMuted),
-          ],
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color),
+              const SizedBox(height: AppSpacing.sm),
+              Text(value,
+                  style: AppTextStyles.heading1.copyWith(color: color)),
+              Text(label, style: AppTextStyles.bodyMuted),
+            ],
+          ),
         ),
       ),
     );
