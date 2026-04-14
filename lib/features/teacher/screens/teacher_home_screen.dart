@@ -7,6 +7,7 @@ import 'package:tinysteps/core/constants/app_theme.dart';
 import 'package:tinysteps/core/widgets/bottom_nav_bar.dart';
 import 'package:tinysteps/core/widgets/logout_dialog.dart';
 import 'package:tinysteps/features/teacher/screens/teacher_settings_screen.dart';
+import 'package:tinysteps/core/widgets/app_calendar.dart';
 
 /// Teacher Home Shell — wraps all teacher tab screens with shared BottomNavBar.
 /// Includes an approval gate: unapproved teachers see a pending screen.
@@ -50,7 +51,9 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
       if (!mounted) return;
       setState(() {
         _isApproved =
-            row != null && row['is_approved'] == true && row['is_active'] == true;
+            row != null &&
+            row['is_approved'] == true &&
+            row['is_active'] == true;
       });
     } catch (_) {
       if (mounted) setState(() => _isApproved = false);
@@ -62,7 +65,9 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
     // Still loading
     if (_isApproved == null) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
       );
     }
 
@@ -86,16 +91,16 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
         }
       },
       child: Scaffold(
-        body: IndexedStack(
-          index: _currentIndex,
-          children: _screens,
-        ),
+        body: IndexedStack(index: _currentIndex, children: _screens),
         bottomNavigationBar: BottomNavBar(
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
           items: const [
             BottomNavBarItem(icon: Icons.home_rounded, label: 'Home'),
-            BottomNavBarItem(icon: Icons.assignment_rounded, label: 'Attendance'),
+            BottomNavBarItem(
+              icon: Icons.assignment_rounded,
+              label: 'Attendance',
+            ),
             BottomNavBarItem(icon: Icons.face_rounded, label: 'Children'),
             BottomNavBarItem(icon: Icons.settings_rounded, label: 'Settings'),
           ],
@@ -170,7 +175,9 @@ class _PendingApprovalScreen extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     side: const BorderSide(color: AppColors.primary),
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.md,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
@@ -236,10 +243,7 @@ class _TeacherDashboardTab extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: () => context.push('/teacher/attendance'),
                 icon: const Icon(Icons.qr_code_scanner, color: AppColors.white),
-                label: Text(
-                  'Scan QR Code',
-                  style: AppTextStyles.buttonLabel,
-                ),
+                label: Text('Scan QR Code', style: AppTextStyles.buttonLabel),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 18),
@@ -249,6 +253,12 @@ class _TeacherDashboardTab extends StatelessWidget {
                 ),
               ),
             ),
+
+            const SizedBox(height: AppSpacing.lg),
+            Text('Calendar', style: AppTextStyles.heading2),
+            const SizedBox(height: AppSpacing.md),
+            const AppCalendar(),
+
             const SizedBox(height: AppSpacing.lg),
 
             Text('Today\'s Attendance', style: AppTextStyles.heading2),
@@ -267,7 +277,8 @@ class _TeacherDashboardTab extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _TodayAttendanceSummary extends StatefulWidget {
   @override
-  State<_TodayAttendanceSummary> createState() => _TodayAttendanceSummaryState();
+  State<_TodayAttendanceSummary> createState() =>
+      _TodayAttendanceSummaryState();
 }
 
 class _TodayAttendanceSummaryState extends State<_TodayAttendanceSummary> {
@@ -512,7 +523,10 @@ class _TeacherChildrenTabState extends State<_TeacherChildrenTab> {
                         color: AppColors.primary.withValues(alpha: 0.4),
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      Text('No children assigned yet', style: AppTextStyles.heading3),
+                      Text(
+                        'No children assigned yet',
+                        style: AppTextStyles.heading3,
+                      ),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
                         'Admin will assign children to you\nonce they are enrolled.',
@@ -535,7 +549,6 @@ class _TeacherChildrenTabState extends State<_TeacherChildrenTab> {
                 final dob = c['date_of_birth'] as String?;
                 final age = dob != null ? _calcAge(dob) : null;
                 final nameStr = c['full_name'] as String? ?? 'Child';
-
                 return GestureDetector(
                   onTap: () {
                     final id = c['id']?.toString() ?? '';
@@ -633,7 +646,10 @@ class _TeacherChildrenTabState extends State<_TeacherChildrenTab> {
       _ => 'Enrolled',
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.full),
@@ -690,14 +706,19 @@ class _AttendanceTile extends StatelessWidget {
               children: [
                 Text(name, style: AppTextStyles.labelBold),
                 Text(
-                  isOut ? 'In: $checkIn  ·  Out: $checkOut' : 'Checked in at $checkIn',
+                  isOut
+                      ? 'In: $checkIn  ·  Out: $checkOut'
+                      : 'Checked in at $checkIn',
                   style: AppTextStyles.bodySmall,
                 ),
               ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: 4,
+            ),
             decoration: BoxDecoration(
               color: isOut
                   ? AppColors.textMuted.withValues(alpha: 0.1)
